@@ -1,0 +1,24 @@
+{
+    "name": "studiothick/silverstripe-vagrant",
+    "description": "Vagrant settings for basic SS 3.x setup",
+    "type": "silverstripe-module",
+    "keywords": [
+        "vagrant",
+        "silverstripe"
+    ],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Giovanni Ferron",
+            "email": "giovanni@studiothick.com"
+        }
+    ],
+    "require": {
+        "php": ">=5.4.0",
+        "silverstripe/framework": ">=3.1.0"
+    },
+    "extra": {
+        "installer-name": "vagrant"
+    },
+    "target-dir": "vagrant"
+}

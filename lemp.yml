@@ -1,0 +1,106 @@
+---
+- hosts: all
+  become: yes
+  become_method: sudo
+  tasks:
+
+  - name: install utility packages
+    apt: name={{item}} state=installed
+    with_items:
+      - build-essential
+      - module-assistant
+      - rsync
+      - curl
+      - git
+
+  - locale_gen: name=en_AU.UTF-8 state=present
+
+  - name: install php packages
+    apt: name={{item}} state=installed
+    with_items:
+      - php5
+      - php-pear
+      - php5-mysql
+      - php5-cli
+      - php5-dev
+      - php5-fpm
+      - php5-cgi
+      - php5-xmlrpc
+      - php5-curl
+      - php5-gd
+      - php-apc
+      - php5-imap
+      - php5-mcrypt
+      - php5-pspell
+      - rsync
+      - imagemagick
+      - libmagickcore-dev
+      - libmagickwand-dev
+      - php5-imagick
+      - php5-memcache
+
+  - name: NGINX | Adding NGINX signing key
+    apt_key: url=http://nginx.org/keys/nginx_signing.key state=present
+
+  - name: NGINX | Adding sources.list deb url for NGINX
+    lineinfile: dest=/etc/apt/sources.list line="deb http://nginx.org/packages/debian/ jessie nginx"
+
+  - name: NGINX | Adding sources.list deb-src url for NGINX
+    lineinfile: dest=/etc/apt/sources.list line="deb-src http://nginx.org/packages/debian/ jessie nginx"
+
+  - name: NGINX | Updating apt cache
+    apt:
+      update_cache: yes
+
+  - name: NGINX | Installing NGINX
+    apt:
+      pkg: nginx
+      state: latest
+
+  - name: NGINX | Starting NGINX
+    service:
+      name: nginx
+      state: started
+
+  - name: NGINX | Config
+    template: src=nginx.conf.j2 dest=/etc/nginx/nginx.conf
+
+  - name: NGINX | Create sites-enabled
+    file: path=/etc/nginx/sites-enabled state=directory
+
+  - name: NGINX | Create default site folder
+    file: path=/var/www/default state=directory
+
+  - name: Check vhost folder and permissions
+    file:
+      path: "/var/www/default"
+      state: directory
+      owner: "www-data"
+      group: "www-data"
+      mode: g+s,u=rwx,g=rwx,o=rx
+
+  - name: NGINX | restart nginx
+    service: name=nginx state=restarted
+
+  - name: Add MySQL repository key
+    apt_key: url=http://repo.mysql.com/RPM-GPG-KEY-mysql state=present
+
+  - name: Add MySQL Server repository
+    apt_repository: repo='deb http://repo.mysql.com/apt/debian/ jessie mysql-5.7' state=present
+
+  - name: Add MySQL Python Connector repository
+    apt_repository: repo='deb http://repo.mysql.com/apt/debian/ jessie connector-python-2.0' state=present
+
+  - name: MySQL Updating apt cache
+    apt:
+      update_cache: yes
+
+  - name: Installing MySQL
+    apt:
+      pkg: mysql-server
+      state: latest
+
+  - name: Starting MySQL
+    service:
+      name: mysql
+      state: started
