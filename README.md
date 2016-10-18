@@ -22,5 +22,12 @@ For the first launch virtual box will throw an `VERR_PDM_DRIVER_NOT_FOUND` error
 This is related to the audio driver. Just open Virtualbox, select the new image,
 under the Audio tab and untick the audio driver checkbox. After that
 
+    $ vagrant up
+
+Now another error appears because `vbguest` package is not installed. Just run
+
     $ vagrant vbguest
-    $ vagrant reload
+
+and then
+
+    $ vagrant reload --provision

@@ -13,12 +13,8 @@
 
   - locale_gen: name=en_AU.UTF-8 state=present
 
-  - name: Updating apt cache
-    apt:
-      update_cache: yes
-
   - name: install utility packages
-    apt: name={{item}} state=installed
+    apt: name={{item}} state=installed update_cache=yes
     with_items:
       - build-essential
       - module-assistant
@@ -27,7 +23,7 @@
       - git
 
   - name: install php packages
-    apt: name={{item}} state=installed
+    apt: name={{item}} state=installed update_cache=yes
     with_items:
       - php5
       - php-pear
@@ -108,40 +104,16 @@
   - name: Add MySQL Python Connector repository
     apt_repository: repo='deb http://repo.mysql.com/apt/debian/ jessie connector-python-2.0' state=present
 
-  - name: MySQL Updating apt cache
-    apt:
-      update_cache: yes
-
   - name: Installing MySQL
-    apt:
-      pkg: mysql-server
-      state: latest
-
-  - name: Installing Python MySQL
-    apt:
-      pkg: python-mysqldb
+    apt: name={{item}} state=latest update_cache=yes
+    with_items:
+      - python-mysqldb
+      - mysql-server
 
   - name: Starting MySQL
     service:
       name: mysql
       state: started
 
-  # securing mysql
-  - name: update mysql root password for all root accounts
-    mysql_user:
-      name: root
-      host: "localhost"
-      password: "root"
-      login_user: root
-      login_password: "root"
-      check_implicit_admin: yes
-      priv: "*.*:ALL,GRANT"
-
-  - name: Remove anonymous users
-    command: 'mysql -ne "{{ item }}"'
-    with_items:
-      - CREATE USER 'root'@'%' IDENTIFIED BY ''
-      - GRANT ALL PRIVILEGES ON *.* TO 'root'@'%'
-      - DROP USER 'root'@'localhost';
-      - FLUSH PRIVILEGES
-    changed_when: False
+  - name:
+    mysql_user: name=vagrant password=vagrant priv=*.*:ALL,GRANT state=present
