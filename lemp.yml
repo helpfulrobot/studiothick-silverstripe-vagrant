@@ -4,6 +4,19 @@
   become_method: sudo
   tasks:
 
+  - name: Add vagrant to sudoers
+    lineinfile:
+      "dest=/etc/sudoers
+      state=present
+      regexp='^vagrant ALL'
+      line='vagrant ALL=(ALL) NOPASSWD: ALL'"
+
+  - locale_gen: name=en_AU.UTF-8 state=present
+
+  - name: Updating apt cache
+    apt:
+      update_cache: yes
+
   - name: install utility packages
     apt: name={{item}} state=installed
     with_items:
@@ -12,8 +25,6 @@
       - rsync
       - curl
       - git
-
-  - locale_gen: name=en_AU.UTF-8 state=present
 
   - name: install php packages
     apt: name={{item}} state=installed
@@ -38,6 +49,12 @@
       - libmagickwand-dev
       - php5-imagick
       - php5-memcache
+
+  - name: NGINX | Create sites-enabled
+    file: path=/etc/nginx/sites-enabled state=directory
+
+  - name: NGINX | Create default site folder
+    file: path=/var/www/default state=directory
 
   - name: NGINX | Adding NGINX signing key
     apt_key: url=http://nginx.org/keys/nginx_signing.key state=present
@@ -71,12 +88,6 @@
       dest: "/etc/nginx/sites-enabled/default.conf"
       mode: 0644
 
-  - name: NGINX | Create sites-enabled
-    file: path=/etc/nginx/sites-enabled state=directory
-
-  - name: NGINX | Create default site folder
-    file: path=/var/www/default state=directory
-
   - name: Check vhost folder and permissions
     file:
       path: "/var/www/default"
@@ -106,7 +117,31 @@
       pkg: mysql-server
       state: latest
 
+  - name: Installing Python MySQL
+    apt:
+      pkg: python-mysqldb
+
   - name: Starting MySQL
     service:
       name: mysql
       state: started
+
+  # securing mysql
+  - name: update mysql root password for all root accounts
+    mysql_user:
+      name: root
+      host: "localhost"
+      password: "root"
+      login_user: root
+      login_password: "root"
+      check_implicit_admin: yes
+      priv: "*.*:ALL,GRANT"
+
+  - name: Remove anonymous users
+    command: 'mysql -ne "{{ item }}"'
+    with_items:
+      - CREATE USER 'root'@'%' IDENTIFIED BY ''
+      - GRANT ALL PRIVILEGES ON *.* TO 'root'@'%'
+      - DROP USER 'root'@'localhost';
+      - FLUSH PRIVILEGES
+    changed_when: False
